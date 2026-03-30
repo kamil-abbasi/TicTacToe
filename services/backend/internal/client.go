@@ -3,6 +3,7 @@ package internal
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -39,7 +40,8 @@ func (c *Client) Write(message []byte) {
 
 func (c *Client) Close() {
 	c.once.Do(func() {
-		c.Close()
+		c.conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""), time.Now().Add(2*time.Second))
+		c.conn.Close()
 		close(c.read)
 		close(c.write)
 	})
@@ -47,7 +49,7 @@ func (c *Client) Close() {
 
 func (c *Client) ReadPump() {
 	defer func() {
-		c.conn.Close()
+		c.Close()
 	}()
 
 	for {
@@ -70,6 +72,10 @@ func (c *Client) ReadPump() {
 }
 
 func (c *Client) WritePump() {
+	defer func() {
+		c.Close()
+	}()
+
 	for message := range c.write {
 		err := c.conn.WriteMessage(websocket.TextMessage, message)
 
