@@ -1,32 +1,15 @@
 package messages
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
-type ErrorMessage struct {
-	Message string
+type ErrorPayload struct {
+	Error string `json:"error"`
 }
 
-func NewError(message string) Message {
-	return &ErrorMessage{
-		Message: message,
-	}
-}
+type Error = Message[ErrorPayload]
 
-func (m *ErrorMessage) IsValid() bool {
-	return true
-}
+func NewError(errorMessage string, subtype string) *Error {
+	messageType := NewType("error").AddSubtype(subtype).String()
 
-func (m *ErrorMessage) ToJsonString() (string, error) {
-	data := map[string]string{"message": m.Message}
-
-	bytes, err := json.Marshal(data)
-
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal message to json")
-	}
-
-	return string(bytes), nil
+	return New(messageType, ErrorPayload{
+		Error: errorMessage,
+	})
 }

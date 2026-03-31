@@ -37,10 +37,12 @@ func NewRoom(playerX *Client, playerO *Client) *Room {
 }
 
 func (r *Room) Run() {
+	bytes, _ := messages.NewInfo("your turn", "turn").ToBytes()
+
 	if r.currentTurn == 'x' {
-		r.playerX.Write([]byte("Your turn"))
+		r.playerX.Write(bytes)
 	} else {
-		r.playerO.Write([]byte("Your turn"))
+		r.playerO.Write(bytes)
 	}
 
 	for {
@@ -63,45 +65,43 @@ func (r *Room) Run() {
 
 func (r *Room) processMessage(message []byte, player *Client, opponent *Client, playerSymbol rune) {
 	if playerSymbol != r.currentTurn {
-		player.Write([]byte("Not your turn"))
+		bytes, _ := messages.NewInfo("not your turn", "turn").ToBytes()
+		player.Write(bytes)
 		return
 	}
 
-	playerMoveMessage, err := messages.PlayerMoveFromBytes(message)
+	gameMoveMessage, err := messages.GameMoveFromBytes(message)
 
 	if err != nil {
-		player.Write([]byte("invalid message format"))
+		bytes, _ := messages.NewError("invalid message format", "validation").ToBytes()
+		player.Write(bytes)
 		return
 	}
 
-	valid := playerMoveMessage.IsValid()
+	valid := gameMoveMessage.Payload.IsValid()
 
 	if !valid {
-		player.Write([]byte("invalid message data"))
+		bytes, _ := messages.NewError("invalid message data", "validation").ToBytes()
+		player.Write(bytes)
 		return
 	}
 
-	jsonString, err := playerMoveMessage.ToJsonString()
+	x := gameMoveMessage.Payload.X
+	y := gameMoveMessage.Payload.Y
 
-	if err != nil {
-		player.Write([]byte("invalid message format"))
+	if r.board[x][y] != '_' {
+		bytes, _ := messages.NewInfo(fmt.Sprintf("square [%v,%v] occupied", x, y), "occupied").ToBytes()
+		player.Write(bytes)
 		return
 	}
 
-	if r.board[playerMoveMessage.X][playerMoveMessage.Y] != '_' {
-		player.Write([]byte(
-			fmt.Sprintf("square [%v,%v] occupied", playerMoveMessage.X, playerMoveMessage.Y),
-		))
+	r.board[x][y] = playerSymbol
 
-		return
-	}
+	bytes, _ := gameMoveMessage.ToBytes()
 
-	r.board[playerMoveMessage.X][playerMoveMessage.Y] = playerSymbol
-
-	opponent.Write([]byte(jsonString))
+	opponent.Write(bytes)
 
 	r.checkForWin(player, opponent, playerSymbol)
-
 	r.changeTurn()
 }
 
@@ -172,8 +172,10 @@ func (r *Room) checkForWin(player *Client, opponent *Client, playerSymbol rune) 
 	}
 
 	if gameFinished {
-		player.Write([]byte("You won"))
-		opponent.Write([]byte("You lost"))
+		bytes1, _ := messages.NewInfo("you won", "victory").ToBytes()
+		bytes2, _ := messages.NewInfo("you lost", "loss").ToBytes()
+		player.Write(bytes1)
+		opponent.Write(bytes2)
 
 		player.Close()
 		opponent.Close()
