@@ -37,6 +37,9 @@ func NewRoom(playerX *Client, playerO *Client) *Room {
 }
 
 func (r *Room) Run() {
+	r.playerX.SetRoom(r)
+	r.playerO.SetRoom(r)
+
 	bytes, _ := messages.NewInfo("your turn", "turn").ToBytes()
 
 	if r.currentTurn == 'x' {
