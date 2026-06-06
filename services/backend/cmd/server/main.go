@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -24,12 +25,8 @@ func main() {
 	})
 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		name := r.URL.Query().Get("name")
-
-		if name == "" {
-			w.Write([]byte("name cannot be empty"))
-			return
-		}
+		num := rand.IntN(1000) + 1
+		name := fmt.Sprintf("guest%v", num)
 
 		conn, err := upgrader.Upgrade(w, r, nil)
 

@@ -1,17 +1,25 @@
+import { useEffect } from "react";
+import Board from "./Board";
+
 function App() {
-	const clientName = `player${Math.trunc(Math.random() * 100)}`;
+	useEffect(() => {
+		const socket = new WebSocket(`ws://localhost:8080/ws`);
 
-	const socket = new WebSocket(`ws://localhost:8080/ws?name=${clientName}`);
+		socket.addEventListener("open", () => {
+			console.log("Connection with server established!");
+		});
 
-	socket.addEventListener("open", (event) => {
-		socket.send("Hello from client!");
-	});
+		socket.addEventListener("message", (event) => {
+			console.log("Message from server: ", event.data);
+		});
 
-	socket.addEventListener("message", (event) => {
-		console.log("Message from server: ", event.data);
-	});
+		return () => {
+			socket.close();
+			console.log("Disconnected from server");
+		};
+	}, []);
 
-	return <p>Hello, World!</p>;
+	return <Board />;
 }
 
 export default App;

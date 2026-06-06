@@ -40,7 +40,12 @@ func (r *Room) Run() {
 	r.playerX.SetRoom(r)
 	r.playerO.SetRoom(r)
 
-	bytes, _ := messages.NewInfo("your turn", "turn").ToBytes()
+	bytes, _ := messages.NewInfo("game started", "started").ToBytes()
+
+	r.playerX.Write(bytes)
+	r.playerO.Write(bytes)
+
+	bytes, _ = messages.NewInfo("your turn", "turn").ToBytes()
 
 	if r.currentTurn == 'x' {
 		r.playerX.Write(bytes)

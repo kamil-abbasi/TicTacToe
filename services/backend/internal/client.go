@@ -62,15 +62,13 @@ func (c *Client) ReadPump() {
 	for {
 		_, message, err := c.conn.ReadMessage()
 
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(
-				err,
-				websocket.CloseGoingAway,
-				websocket.CloseNormalClosure,
-				websocket.CloseNoStatusReceived,
-			) {
-				log.Println(err.Error())
-			}
+		if websocket.IsUnexpectedCloseError(
+			err,
+			websocket.CloseGoingAway,
+			websocket.CloseNormalClosure,
+			websocket.CloseNoStatusReceived,
+		) {
+			log.Println(err.Error())
 			break
 		}
 
